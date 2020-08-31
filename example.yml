@@ -1,0 +1,13 @@
+---
+
+- call:
+    path: http://httpstat.us/301
+#    path: https://jsonplaceholder.typicode.com/todos/1
+    delay: 4
+    failure: 500, 301
+
+- call:
+#    path: http://httpstat.us/301
+    path: https://jsonplaceholder.typicode.com/todos/2
+    failure:
+      - 201
