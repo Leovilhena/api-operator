@@ -39,16 +39,16 @@ def call_path(**kwargs):
 
     response_body = {
         'response': response,
-        'code': None,
-        'warning': None,
-        'error': None,
+        'code': kwargs.get('code', None),
+        'warning': kwargs.get('warning', None),
+        'error': kwargs.get('error', None),
         'retry': retry,
         'return': True,
+        'exit': False,
     }
 
     try:
         response = request(
-                    method=kwargs.get('method'),
                     url=kwargs.get('path'),
                     **call_kwargs_interface(kwargs)
         )
@@ -58,7 +58,7 @@ def call_path(**kwargs):
                 'response': response.json(),
                 'code': response.status_code,
                 'warning': 'Response code declared in failure_code',
-                'return': False
+                'return': False,
             })
         elif not success_code or response.status_code in success_code:
             response_body.update({
@@ -73,27 +73,31 @@ def call_path(**kwargs):
     except InvalidURL:
         response_body.update({
             'warning': 'URL is invalid',
-            'error': traceback.format_exc()
+            'error': traceback.format_exc(),
+            'exit': True
         })
     except RequestException:
         response_body.update({
             'warning': traceback.format_exc(),
+            'return': False
         })
     except json.JSONDecodeError:
         response_body.update({
-            'response': response.content or None,
+            'response': str(response.content, 'utf-8') or None,
             'code': response.status_code or None,
             'warning': 'Response is not a valid JSON',
-            'error': traceback.format_exc()
+            'error': traceback.format_exc(),
+            'exit': True
         })
 
-    if not response_body.get('return') and retry:
+    if not response_body['return'] and retry:
         # TODO append errors to a key on each retry
         kwargs['retry'] -= 1
         response_body = call_path(**kwargs)
-    elif not response_body.get('return') and not retry:
+    elif not response_body['return'] and not retry and not response_body['warning']:
         response_body.update({
             'warning': 'No more retries',
+            'exit': True
         })
 
     _ = response_body.pop('return', None)
@@ -107,5 +111,6 @@ def call_kwargs_interface(kwargs):
         'headers': kwargs.get('headers'),
         'timeout': kwargs.get('timeout'),
         'proxies': kwargs.get('proxies'),
-        'cookies': kwargs.get('cookies')
+        'cookies': kwargs.get('cookies'),
+        'method': kwargs.get('method')
     }
