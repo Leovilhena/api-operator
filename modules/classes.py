@@ -16,7 +16,7 @@ class Action(ABC):
     def __init__(self, **kwargs):
         self._path = kwargs.pop('path')
         self._method = set_method(kwargs.pop('method', 'GET'))
-        self._input_data = kwargs.pop('input', None)
+        self._input_data = kwargs.pop('input_data', None)
         self._output_data = None
         self._success_code, self._failure_code = set_code_defaults_kwargs(kwargs)
         self._headers = kwargs.pop('headers', None)
@@ -24,13 +24,12 @@ class Action(ABC):
         self._body_type = kwargs.pop('body_type', None)
         self._cookies = kwargs.pop('cookies', None)
         self._proxies = kwargs.pop('proxies', None)
-        self._timeout = kwargs.pop('timeout', None)
+        self._timeout = kwargs.pop('timeout', (3, 9))
         self._delay = kwargs.pop('delay', 0)
         self._retry = kwargs.pop('retry', 0)
         self._extra_keys = kwargs
 
     @property
-    # @abstractmethod
     def path(self):
         return self._path
 
@@ -89,7 +88,7 @@ class Call(Action):  # TODO add expose param?
 
     @property
     def path(self):
-        return
+        return self._path
 
 
 # TODO Implement and add subclasses or parameters if, elif, else based on success or failure code as booleans
