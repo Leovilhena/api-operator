@@ -29,12 +29,20 @@ def get_plan(actions: dict) -> list:
 
 def main():
     actions = parse_yaml_actions('example.yml')
-    # pprint(actions)
     print(f'[*] Initializing {len(actions)} actions\n')
     plan = get_plan(actions)
+
+    input_data = None
     for call in plan:
-        pprint(call.debug)
-        call.output_data = call_path(**call.debug)
+        # Set input_data from previous call output_data
+        if not call.input_data and input_data is not None:
+            call.input_data = input_data
+
+        call.output_data = input_data = call_path(**call.debug)
+
+        if call.output_data.get('exit'):
+            print(f'[*] Call to {call.path} failed!')
+            exit(1)
         # pprint(call.output_data)
 
 
